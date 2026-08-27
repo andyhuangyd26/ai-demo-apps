@@ -86,6 +86,34 @@
     width:auto;padding:0 14px;font-family:var(--font-body);font-weight:600;font-size:13px;
   }
 
+  /* ---------- Batter lookup ---------- */
+  .lookup-card{
+    background:var(--card);border:1.5px solid var(--ink);border-radius:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,.1);padding:16px 18px 18px;margin-bottom:24px;
+  }
+  .lookup-label{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:9px;display:block;
+  }
+  .name-search{position:relative;}
+  #batter-search{
+    width:100%;border:1.5px solid var(--ink);border-radius:4px;background:#fff;
+    font-family:var(--font-body);font-size:14px;padding:10px 10px;color:var(--ink);
+  }
+  #batter-search:focus{outline:2px solid var(--blue);outline-offset:1px;}
+  .suggest{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;
+    background:#fff;border:1.5px solid var(--ink);border-radius:4px;
+    box-shadow:0 4px 8px rgba(0,0,0,.15);
+    z-index:20;max-height:230px;overflow-y:auto;display:none;
+  }
+  .suggest.active{display:block;}
+  .suggest-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+  .suggest-item:hover{background:var(--paper);}
+  .suggest-item .s-pos{font-family:var(--font-mono);font-size:11px;color:var(--grey);flex:0 0 auto;}
+  #batter-result{margin-top:14px;}
+  .batter-result-head{font-size:13px;color:#4a4536;margin-bottom:10px;}
+
   /* ---------- States ---------- */
   .state-box{text-align:center;padding:40px 20px;color:var(--grey);font-size:13px;font-family:var(--font-mono);}
   .state-box.error{color:var(--red);}
@@ -181,6 +209,15 @@
     <h1>今日<em>打者</em>VS<br>先發投手</h1>
     <p class="sub">列出今天所有 MLB 賽事的先發投手，點選任一位投手，查看對方打者過去對戰他的生涯數據。</p>
   </header>
+
+  <div class="lookup-card">
+    <label class="lookup-label" for="batter-search">打者今日對戰查詢</label>
+    <div class="name-search">
+      <input type="text" id="batter-search" placeholder="輸入球員姓名，例如 Aaron Judge" autocomplete="off">
+      <div class="suggest" id="batter-suggest"></div>
+    </div>
+    <div id="batter-result"></div>
+  </div>
 
   <div class="datebar">
     <button type="button" id="prev-day" aria-label="前一天">‹</button>
@@ -430,6 +467,130 @@
       '<span><span class="dot cold"></span>對戰打數≥5 且 OPS≤.500（投手壓制）</span></div>';
 
     panel.innerHTML = html;
+  }
+
+  // ---------- 打者今日對戰查詢（固定查「今天」，不受下方日期切換影響） ----------
+  let todayGamesPromise = null;
+  function getTodayGames(){
+    if(!todayGamesPromise){
+      const t = todayET();
+      todayGamesPromise = fetch('/api/mlb?path=schedule&sportId=1&date=' + t + '&hydrate=probablePitcher,team')
+        .then(r => r.json())
+        .then(d => (d.dates && d.dates[0] && d.dates[0].games) || [])
+        .catch(() => []);
+    }
+    return todayGamesPromise;
+  }
+
+  const batterSearchInput = document.getElementById('batter-search');
+  const batterSuggestBox = document.getElementById('batter-suggest');
+  const batterResultEl = document.getElementById('batter-result');
+  let batterSearchTimer = null;
+
+  batterSearchInput.addEventListener('input', () => {
+    if(batterSearchTimer) clearTimeout(batterSearchTimer);
+    const q = batterSearchInput.value.trim();
+    if(q.length < 2){ batterSuggestBox.classList.remove('active'); batterSuggestBox.innerHTML = ''; return; }
+    batterSearchTimer = setTimeout(() => searchBatters(q), 350);
+  });
+  batterSearchInput.addEventListener('blur', () => setTimeout(() => batterSuggestBox.classList.remove('active'), 200));
+
+  async function searchBatters(q){
+    try{
+      const res = await fetch('/api/mlb?path=people/search&names=' + encodeURIComponent(q));
+      const data = await res.json();
+      const people = ((data && data.people) || [])
+        .filter(p => p.isPlayer !== false && (!p.primaryPosition || p.primaryPosition.abbreviation !== 'P'))
+        .sort((a,b) => (b.active === true) - (a.active === true))
+        .slice(0, 8);
+      batterSuggestBox.innerHTML = '';
+      if(people.length === 0){ batterSuggestBox.classList.remove('active'); return; }
+      people.forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'suggest-item';
+        const posAbbr = (p.primaryPosition && p.primaryPosition.abbreviation) || '?';
+        el.innerHTML = '<span>' + escapeHtml(p.fullName) + '</span><span class="s-pos">' + escapeHtml(posAbbr) + (p.active ? '' : ' · 非現役') + '</span>';
+        el.addEventListener('mousedown', e => { e.preventDefault(); pickBatter(p); });
+        batterSuggestBox.appendChild(el);
+      });
+      batterSuggestBox.classList.add('active');
+    } catch(e){ /* 搜尋失敗就靜默略過 */ }
+  }
+
+  async function pickBatter(person){
+    batterSearchInput.value = person.fullName;
+    batterSuggestBox.classList.remove('active');
+    batterSuggestBox.innerHTML = '';
+    batterResultEl.innerHTML = '<div class="panel-loading">查詢今日對戰中…</div>';
+
+    try{
+      const detailRes = await fetch('/api/mlb?path=people/' + person.id + '&hydrate=currentTeam');
+      const detailData = await detailRes.json();
+      const detail = detailData && detailData.people && detailData.people[0];
+      const team = detail && detail.currentTeam;
+      if(!team){
+        batterResultEl.innerHTML = '<div class="panel-hint">查不到 ' + escapeHtml(person.fullName) + ' 目前效力的球隊。</div>';
+        return;
+      }
+
+      const games = await getTodayGames();
+      const game = games.find(g => g.teams.home.team.id === team.id || g.teams.away.team.id === team.id);
+      if(!game){
+        batterResultEl.innerHTML = '<div class="panel-hint">' + escapeHtml(team.name) + '（' + escapeHtml(person.fullName) + ' 所屬球隊）今天沒有比賽。</div>';
+        return;
+      }
+
+      const isHome = game.teams.home.team.id === team.id;
+      const oppSide = isHome ? game.teams.away : game.teams.home;
+      const pitcher = oppSide.probablePitcher;
+      if(!pitcher){
+        batterResultEl.innerHTML = '<div class="panel-hint">今天對戰 ' + escapeHtml(oppSide.team.name) + '，但先發投手尚未公布，請稍後再查。</div>';
+        return;
+      }
+
+      const posAbbr = (person.primaryPosition && person.primaryPosition.abbreviation) || '';
+      const r = await fetchVsPlayer({ id: person.id, name: person.fullName, pos: posAbbr }, pitcher.id);
+      renderBatterResult(person, team, oppSide, pitcher, r);
+    } catch(err){
+      console.error('batter lookup error:', err);
+      batterResultEl.innerHTML = '<div class="panel-hint" style="color:var(--red)">查詢失敗：' + escapeHtml(err.message || '請再試一次') + '</div>';
+    }
+  }
+
+  function renderBatterResult(person, team, oppSide, pitcher, r){
+    let html = '<div class="batter-result-head">今日賽事：' + escapeHtml(team.name) + '　vs　' + escapeHtml(oppSide.team.name) + '</div>';
+
+    const s = r.stat;
+    const ab = s ? Number(s.atBats || 0) : 0;
+
+    html += '<div class="matchup-table-wrap"><table class="matchup"><thead><tr>' +
+      '<th>打者</th><th>投手</th><th>打數</th><th>安打</th><th>全壘打</th><th>打點</th><th>三振</th><th>AVG</th><th>OPS</th>' +
+      '</tr></thead><tbody>';
+
+    if(!s || ab === 0){
+      html += '<tr class="no-history"><td>' + escapeHtml(person.fullName) + '</td><td>' + escapeHtml(pitcher.fullName) + '</td><td colspan="7">無生涯交手紀錄</td></tr>';
+    } else {
+      const ops = parseFloat(s.ops || '0');
+      const hot = ab >= 5 && ops >= 0.850;
+      const cold = ab >= 5 && ops <= 0.500;
+      const cls = hot ? 'hot' : (cold ? 'cold' : '');
+      html += '<tr>' +
+        '<td>' + escapeHtml(person.fullName) + '</td>' +
+        '<td>' + escapeHtml(pitcher.fullName) + '</td>' +
+        '<td>' + ab + '</td>' +
+        '<td>' + (s.hits || 0) + '</td>' +
+        '<td>' + (s.homeRuns || 0) + '</td>' +
+        '<td>' + (s.rbi || 0) + '</td>' +
+        '<td>' + (s.strikeOuts || 0) + '</td>' +
+        '<td class="' + cls + '">' + escapeHtml(s.avg || '—') + '</td>' +
+        '<td class="' + cls + '">' + escapeHtml(s.ops || '—') + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody></table></div>' +
+      '<div class="legend"><span><span class="dot hot"></span>打數≥5 且 OPS≥.850（打者佔優）</span>' +
+      '<span><span class="dot cold"></span>打數≥5 且 OPS≤.500（投手壓制）</span></div>';
+
+    batterResultEl.innerHTML = html;
   }
 
   document.getElementById('prev-day').addEventListener('click', () => {
