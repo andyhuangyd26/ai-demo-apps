@@ -155,6 +155,7 @@
     padding:9px 16px;border-bottom:1.5px solid var(--ink);
     font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;color:var(--grey);
   }
+  .g-time-et{opacity:.65;}
   .g-status{
     padding:2px 8px;border-radius:3px;background:var(--paper);color:var(--ink);font-weight:600;
   }
@@ -259,11 +260,10 @@
     const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
     return y + '-' + m + '-' + day;
   }
-  // MLB 的比賽日以美國東岸時間為準
-  function todayET(){
-    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
-    const o = {}; parts.forEach(p => o[p.type] = p.value);
-    return o.year + '-' + o.month + '-' + o.day;
+  // 頁面的「日期」一律以瀏覽器所在時區（對你來說就是台灣時間）的日曆天為準，
+  // 但 MLB Stats API 是以美東時間分賽程日的，所以查詢時可能要合併查詢美東前後兩天。
+  function todayLocal(){
+    return toDateStr(new Date());
   }
   function shiftDate(str, delta){
     const [y,m,d] = str.split('-').map(Number);
@@ -271,8 +271,44 @@
     dt.setUTCDate(dt.getUTCDate() + delta);
     return toDateStr(new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
   }
+  function etDateStrOf(date){
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(date);
+    const o = {}; parts.forEach(p => o[p.type] = p.value);
+    return o.year + '-' + o.month + '-' + o.day;
+  }
+  // 抓出「本地（台灣）日曆天 dateStr」實際開打的所有比賽：
+  // 因為時差，這一天可能橫跨美東的前後兩個賽程日，所以合併查詢後再依實際開打時間篩選。
+  async function fetchGamesForLocalDay(dateStr){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const dayStart = new Date(y, m-1, d, 0, 0, 0, 0);
+    const dayEnd = new Date(y, m-1, d+1, 0, 0, 0, 0);
+    const etStart = etDateStrOf(dayStart);
+    const etEnd = etDateStrOf(new Date(dayEnd.getTime() - 1));
+    const etDates = etStart === etEnd ? [etStart] : [etStart, etEnd];
 
-  let currentDate = todayET();
+    const results = await Promise.all(etDates.map(d =>
+      fetch('/api/mlb?path=schedule&sportId=1&date=' + d + '&hydrate=probablePitcher,team,linescore,lineups')
+        .then(r => r.json())
+    ));
+
+    const seen = new Set();
+    const games = [];
+    results.forEach(data => {
+      const day = data && data.dates && data.dates[0];
+      ((day && day.games) || []).forEach(g => {
+        if(seen.has(g.gamePk)) return;
+        const gd = new Date(g.gameDate);
+        if(gd >= dayStart && gd < dayEnd){
+          seen.add(g.gamePk);
+          games.push(g);
+        }
+      });
+    });
+    games.sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
+    return games;
+  }
+
+  let currentDate = todayLocal();
   dateInput.value = currentDate;
 
   function escapeHtml(str){
@@ -293,16 +329,16 @@
       return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
     } catch(e){ return ''; }
   }
+  function fmtTimeET(iso){
+    try{
+      return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', timeZone:'America/New_York' });
+    } catch(e){ return ''; }
+  }
 
   async function loadGames(dateStr){
     gamesSection.innerHTML = '<div class="state-box"><div class="runway"><div class="ball">⚾</div></div>讀取今日賽程中…</div>';
     try{
-      const res = await fetch('/api/mlb?path=schedule&sportId=1&date=' + encodeURIComponent(dateStr) + '&hydrate=probablePitcher,team,linescore,lineups');
-      const data = await res.json();
-      if(!res.ok) throw new Error((data && data.error) || ('讀取失敗 (' + res.status + ')'));
-
-      const day = (data.dates && data.dates[0]) || null;
-      const games = (day && day.games) || [];
+      const games = await fetchGamesForLocalDay(dateStr);
       if(games.length === 0){
         gamesSection.innerHTML = '<div class="state-box">這一天沒有 MLB 賽事，換個日期看看吧。</div>';
         return;
@@ -330,7 +366,7 @@
       head.className = 'game-head';
       const statusText = (game.status && game.status.detailedState) || '';
       head.innerHTML =
-        '<span>' + escapeHtml(fmtTime(game.gameDate)) + '</span>' +
+        '<span>' + escapeHtml(fmtTime(game.gameDate)) + '　<span class="g-time-et">(ET ' + escapeHtml(fmtTimeET(game.gameDate)) + ')</span></span>' +
         '<span class="g-status ' + statusClass(statusText) + '">' + escapeHtml(statusText) + '</span>';
       card.appendChild(head);
 
@@ -489,15 +525,11 @@
     panel.innerHTML = html;
   }
 
-  // ---------- 打者今日對戰查詢（固定查「今天」，不受下方日期切換影響） ----------
+  // ---------- 打者今日對戰查詢（固定查「今天」＝你所在時區的今天，不受下方日期切換影響） ----------
   let todayGamesPromise = null;
   function getTodayGames(){
     if(!todayGamesPromise){
-      const t = todayET();
-      todayGamesPromise = fetch('/api/mlb?path=schedule&sportId=1&date=' + t + '&hydrate=probablePitcher,team')
-        .then(r => r.json())
-        .then(d => (d.dates && d.dates[0] && d.dates[0].games) || [])
-        .catch(() => []);
+      todayGamesPromise = fetchGamesForLocalDay(todayLocal()).catch(() => []);
     }
     return todayGamesPromise;
   }
@@ -633,7 +665,7 @@
     loadGames(currentDate);
   });
   document.getElementById('today-btn').addEventListener('click', () => {
-    currentDate = todayET();
+    currentDate = todayLocal();
     dateInput.value = currentDate;
     loadGames(currentDate);
   });
