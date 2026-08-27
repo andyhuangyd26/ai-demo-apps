@@ -204,6 +204,8 @@
   .legend .dot.cold{background:var(--red);}
 
   footer{text-align:center;margin-top:32px;font-size:11px;color:var(--grey);font-family:var(--font-mono);letter-spacing:.04em;}
+  footer .disclaimer{margin-top:8px;line-height:1.7;max-width:520px;margin-left:auto;margin-right:auto;}
+  footer .author{margin-top:14px;font-size:11px;color:var(--ink);opacity:.7;}
 
   @media (max-width:460px){
     .pitcher-btn .pitcher-name{font-size:17px;}
@@ -241,7 +243,12 @@
 
   <div id="games-section"></div>
 
-  <footer>先發投手與打線來自 MLB Stats API · 對戰數據為生涯累積 · 打線於賽前約 2–3 小時公布</footer>
+  <footer>
+    <div>先發投手與打線來自 MLB Stats API · 對戰數據為生涯累積 · 打線於賽前約 2–3 小時公布</div>
+    <div class="disclaimer">本站數據僅供參考，不保證即時或完全準確，實際先發與打線請以官方公告為準；
+      內容與 MLB、MLB Advanced Media 官方無關，亦不構成任何投注或財務建議。</div>
+    <div class="author">Built by Andy Huang</div>
+  </footer>
 </div>
 
 <script>
