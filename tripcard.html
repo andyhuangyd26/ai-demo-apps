@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行程卡 TripCard — 把想法變成一張看得懂的行程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12233D;
+    --paper:#EDEFE8;
+    --card:#FBFBF7;
+    --yellow:#FFC845;
+    --teal:#1C7C74;
+    --teal-deep:#0F5850;
+    --brick:#B14229;
+    --line:#D6D8CC;
+    --grey:#6B7280;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:
+      radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0/22px 22px,
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    padding:32px 16px 80px;
+    min-height:100vh;
+  }
+
+  .wrap{max-width:640px;margin:0 auto;}
+
+  /* ---------- Header ---------- */
+  header{margin-bottom:28px;text-align:center;}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--teal-deep);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-size:clamp(28px,6vw,40px);
+    font-weight:700;
+    line-height:1.15;
+    margin:0 0 12px;
+  }
+  h1 span{color:var(--teal);}
+  .sub{
+    font-size:15px;
+    color:var(--grey);
+    max-width:440px;
+    margin:0 auto;
+    line-height:1.6;
+  }
+
+  /* ---------- Card shell (ticket look) ---------- */
+  .ticket{
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:18px;
+    position:relative;
+    overflow:visible;
+    box-shadow:0 2px 0 var(--ink);
+  }
+
+  .stub{
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:16px 16px 0 0;
+    padding:16px 22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.06em;
+  }
+  .stub b{
+    font-family:var(--font-display);
+    font-size:14px;
+    letter-spacing:.02em;
+    color:var(--yellow);
+  }
+
+  .perforation{
+    position:relative;
+    height:0;
+    border-top:2px dashed var(--line);
+    margin:0 22px;
+  }
+  .perforation::before,.perforation::after{
+    content:"";
+    position:absolute;
+    top:-9px;
+    width:18px;height:18px;
+    background:var(--paper);
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+  }
+  .perforation::before{left:-31px;}
+  .perforation::after{right:-31px;}
+
+  /* ---------- Form ---------- */
+  .form{padding:24px 22px 26px;}
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--teal-deep);
+    margin-bottom:8px;
+  }
+
+  input[type="text"]{
+    width:100%;
+    border:none;
+    border-bottom:2px solid var(--ink);
+    background:transparent;
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:600;
+    padding:6px 2px 8px;
+    color:var(--ink);
+    outline:none;
+  }
+  input[type="text"]::placeholder{color:#B7BAA9;font-weight:500;}
+  input[type="text"]:focus{border-bottom-color:var(--teal);}
+
+  .stepper{display:flex;align-items:center;gap:14px;}
+  .stepper button{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    font-family:var(--font-display);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .stepper button:hover{background:var(--yellow);}
+  .stepper button:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+  .stepper .days-value{
+    font-family:var(--font-mono);
+    font-size:20px;
+    min-width:64px;
+    text-align:center;
+  }
+  .stepper .days-value span{font-size:12px;color:var(--grey);}
+
+  .pillrow{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    border-radius:999px;
+    padding:8px 16px;
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--ink);
+    transition:background .12s ease;
+  }
+  .pill:hover{background:#F0EFE4;}
+  .pill:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+  .pill[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .pill.budget[aria-pressed="true"]{background:var(--brick);border-color:var(--brick);}
+
+  .hint{font-size:11px;color:var(--grey);margin-top:8px;}
+
+  .submit-row{margin-top:26px;}
+  .btn-main{
+    width:100%;
+    background:var(--yellow);
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    padding:15px 20px;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow:0 3px 0 var(--ink);
+    transition:transform .08s ease;
+  }
+  .btn-main:hover{transform:translateY(-1px);}
+  .btn-main:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+  .btn-main:focus-visible{outline:3px solid var(--teal-deep);outline-offset:3px;}
+  .btn-main:disabled{opacity:.55;cursor:default;transform:none;box-shadow:0 3px 0 var(--ink);}
+
+  /* ---------- Loading ---------- */
+  .loading{
+    display:none;
+    padding:40px 22px;
+    text-align:center;
+  }
+  .loading.active{display:block;}
+  .runway{
+    position:relative;
+    height:2px;
+    background:var(--line);
+    margin:22px auto 14px;
+    max-width:280px;
+    overflow:visible;
+  }
+  .plane{
+    position:absolute;top:-9px;left:0;
+    font-size:18px;
+    animation:fly 1.6s ease-in-out infinite;
+  }
+  @keyframes fly{
+    0%{left:0;opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    100%{left:calc(100% - 18px);opacity:0;}
+  }
+  .loading-text{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--teal-deep);
+    letter-spacing:.08em;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .plane{animation:none;left:calc(50% - 9px);opacity:1;}
+  }
+
+  /* ---------- Error ---------- */
+  .error-box{
+    display:none;
+    padding:22px;
+    text-align:center;
+    color:var(--brick);
+    font-size:14px;
+  }
+  .error-box.active{display:block;}
+  .error-box button{
+    margin-top:12px;
+    background:none;
+    border:1.5px solid var(--brick);
+    color:var(--brick);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    padding:8px 16px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+
+  /* ---------- Output ---------- */
+  #output{margin-top:26px;display:none;}
+  #output.active{display:block;}
+
+  .day-card{
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:16px;
+    margin-bottom:20px;
+    overflow:hidden;
+  }
+  .day-head{
+    background:var(--teal);
+    color:#fff;
+    padding:12px 20px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .day-head .num{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    opacity:.85;
+  }
+  .day-head .theme{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16px;
+  }
+
+  .stops{padding:18px 22px 6px;position:relative;}
+  .stops::before{
+    content:"";
+    position:absolute;
+    left:38px;top:6px;bottom:18px;
+    border-left:2px dotted var(--line);
+  }
+  .stop{
+    position:relative;
+    padding-left:38px;
+    margin-bottom:20px;
+  }
+  .stop:last-child{margin-bottom:6px;}
+  .stop::before{
+    content:"";
+    position:absolute;
+    left:29px;top:5px;
+    width:11px;height:11px;
+    border-radius:50%;
+    background:var(--yellow);
+    border:2px solid var(--ink);
+  }
+  .stop .time{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--teal-deep);
+    font-weight:600;
+    margin-bottom:3px;
+  }
+  .stop .title{
+    font-family:var(--font-display);
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:3px;
+  }
+  .stop .note{font-size:13px;color:var(--grey);line-height:1.5;}
+
+  .output-actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:10px;
+  }
+  .btn-ghost{
+    background:none;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    padding:9px 18px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .btn-ghost:hover{background:var(--card);}
+
+  footer{
+    text-align:center;
+    margin-top:36px;
+    font-size:11px;
+    color:var(--grey);
+    font-family:var(--font-mono);
+    letter-spacing:.04em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">AI 行程規劃工具 · Demo</div>
+    <h1>把一個模糊的念頭<br>變成<span>一張行程卡</span></h1>
+    <p class="sub">輸入目的地、天數、步調和喜好，AI 會幫你排出一份看得懂、帶得走的每日行程。</p>
+  </header>
+
+  <div class="ticket">
+    <div class="stub">
+      <span>TRIPCARD / 行程卡</span>
+      <b id="stub-dest">DEST · ???</b>
+    </div>
+    <div class="perforation"></div>
+
+    <div class="form" id="form-section">
+      <div class="field">
+        <label for="dest">目的地</label>
+        <input type="text" id="dest" placeholder="例如：京都、澎湖、清邁…" maxlength="20">
+      </div>
+
+      <div class="field">
+        <label>天數</label>
+        <div class="stepper">
+          <button type="button" id="days-minus" aria-label="減少天數">−</button>
+          <div class="days-value"><span id="days-num">2</span><span> 天</span></div>
+          <button type="button" id="days-plus" aria-label="增加天數">＋</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>步調</label>
+        <div class="pillrow" id="pace-row">
+          <button type="button" class="pill" data-value="悠閒" aria-pressed="false">悠閒</button>
+          <button type="button" class="pill" data-value="適中" aria-pressed="true">適中</button>
+          <button type="button" class="pill" data-value="緊湊" aria-pressed="false">緊湊</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>興趣（可複選，最多 4 個）</label>
+        <div class="pillrow" id="interest-row">
+          <button type="button" class="pill" data-value="美食">美食</button>
+          <button type="button" class="pill" data-value="自然風景">自然風景</button>
+          <button type="button" class="pill" data-value="文化古蹟">文化古蹟</button>
+          <button type="button" class="pill" data-value="購物">購物</button>
+          <button type="button" class="pill" data-value="親子友善">親子友善</button>
+          <button type="button" class="pill" data-value="夜生活">夜生活</button>
+          <button type="button" class="pill" data-value="攝影打卡">攝影打卡</button>
+          <button type="button" class="pill" data-value="放鬆度假">放鬆度假</button>
+        </div>
+        <div class="hint" id="interest-hint"></div>
+      </div>
+
+      <div class="field">
+        <label>預算等級</label>
+        <div class="pillrow" id="budget-row">
+          <button type="button" class="pill budget" data-value="經濟" aria-pressed="false">經濟</button>
+          <button type="button" class="pill budget" data-value="中等" aria-pressed="true">中等</button>
+          <button type="button" class="pill budget" data-value="奢華" aria-pressed="false">奢華</button>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <button type="button" class="btn-main" id="generate-btn">生成行程卡</button>
+      </div>
+    </div>
+
+    <div class="loading" id="loading-section">
+      <div class="runway"><div class="plane">✈️</div></div>
+      <div class="loading-text" id="loading-text">整理你的行程中…</div>
+    </div>
+
+    <div class="error-box" id="error-section">
+      <div id="error-text">這班行程誤點了，再試一次看看。</div>
+      <button type="button" id="retry-btn">重新產生</button>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <footer>手動填表 → AI 整理成結構化行程 · 純前端 Demo</footer>
+</div>
+
+<script>
+  const state = {
+    days: 2,
+    pace: '適中',
+    budget: '中等',
+    interests: new Set()
+  };
+
+  const destInput = document.getElementById('dest');
+  const stubDest = document.getElementById('stub-dest');
+  destInput.addEventListener('input', () => {
+    stubDest.textContent = 'DEST · ' + (destInput.value.trim() || '???').toUpperCase();
+  });
+
+  const daysNum = document.getElementById('days-num');
+  document.getElementById('days-minus').addEventListener('click', () => {
+    state.days = Math.max(1, state.days - 1);
+    daysNum.textContent = state.days;
+  });
+  document.getElementById('days-plus').addEventListener('click', () => {
+    state.days = Math.min(4, state.days + 1);
+    daysNum.textContent = state.days;
+  });
+
+  function setupSingleSelect(rowId, stateKey){
+    const row = document.getElementById(rowId);
+    row.querySelectorAll('.pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.pill').forEach(b => b.setAttribute('aria-pressed','false'));
+        btn.setAttribute('aria-pressed','true');
+        state[stateKey] = btn.dataset.value;
+      });
+    });
+  }
+  setupSingleSelect('pace-row','pace');
+  setupSingleSelect('budget-row','budget');
+
+  const interestHint = document.getElementById('interest-hint');
+  document.querySelectorAll('#interest-row .pill').forEach(btn => {
+    btn.setAttribute('aria-pressed','false');
+    btn.addEventListener('click', () => {
+      const v = btn.dataset.value;
+      if(state.interests.has(v)){
+        state.interests.delete(v);
+        btn.setAttribute('aria-pressed','false');
+      } else {
+        if(state.interests.size >= 4){
+          interestHint.textContent = '最多選 4 個興趣喔';
+          return;
+        }
+        state.interests.add(v);
+        btn.setAttribute('aria-pressed','true');
+      }
+      interestHint.textContent = '';
+    });
+  });
+
+  const formSection = document.getElementById('form-section');
+  const loadingSection = document.getElementById('loading-section');
+  const errorSection = document.getElementById('error-section');
+  const outputEl = document.getElementById('output');
+  const loadingText = document.getElementById('loading-text');
+  const generateBtn = document.getElementById('generate-btn');
+
+  const loadingMessages = ['整理你的行程中…','跟目的地確認開放時間…','把想法排進時間軸…','幫每一站配上小提醒…'];
+  let loadingInterval;
+
+  function showLoading(){
+    formSection.style.display = 'none';
+    errorSection.classList.remove('active');
+    outputEl.classList.remove('active');
+    outputEl.innerHTML = '';
+    loadingSection.classList.add('active');
+    let i = 0;
+    loadingText.textContent = loadingMessages[0];
+    loadingInterval = setInterval(() => {
+      i = (i + 1) % loadingMessages.length;
+      loadingText.textContent = loadingMessages[i];
+    }, 1400);
+  }
+
+  function hideLoading(){
+    clearInterval(loadingInterval);
+    loadingSection.classList.remove('active');
+  }
+
+  function showError(msg){
+    hideLoading();
+    document.getElementById('error-text').textContent = msg || '這班行程誤點了，再試一次看看。';
+    errorSection.classList.add('active');
+  }
+
+  function buildPrompt(){
+    const dest = destInput.value.trim() || '一個放鬆的小旅行';
+    const interestList = state.interests.size ? Array.from(state.interests).join('、') : '不特別限定';
+    return [
+      '你是一個行程規劃助手。請針對以下條件，產生一份',
+      state.days + ' 天的旅行行程。',
+      '',
+      '目的地：' + dest,
+      '步調：' + state.pace,
+      '興趣偏好：' + interestList,
+      '預算等級：' + state.budget,
+      '',
+      '請只回傳 JSON，不要任何說明文字、不要 markdown code fence。',
+      '格式如下（days 陣列長度必須等於 ' + state.days + '）：',
+      '{"days":[{"day":1,"theme":"這天的主題（8個字以內）","stops":[{"time":"09:00","title":"景點或活動名稱","note":"一句話說明，15個字以內"}]}]}',
+      '每天安排 3 個 stop，時間需合理遞增，內容要具體（可用真實地名），不要空泛描述。'
+    ].join('\n');
+  }
+
+  async function generateItinerary(){
+    if(!destInput.value.trim()){
+      destInput.focus();
+      destInput.style.borderBottomColor = 'var(--brick)';
+      setTimeout(() => { destInput.style.borderBottomColor = ''; }, 1200);
+      return;
+    }
+    generateBtn.disabled = true;
+    showLoading();
+
+    try{
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: buildPrompt() })
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if(!response.ok){
+        throw new Error((data && data.error) || ('API 回應異常 (' + response.status + ')'));
+      }
+      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+      const raw = textBlocks.join('\n').trim();
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+
+      let parsed;
+      try{
+        parsed = JSON.parse(cleaned);
+      } catch(e){
+        throw new Error('行程格式解析失敗');
+      }
+
+      if(!parsed.days || !Array.isArray(parsed.days) || parsed.days.length === 0){
+        throw new Error('沒有收到有效的行程內容');
+      }
+
+      renderOutput(parsed);
+      hideLoading();
+
+    } catch(err){
+      console.error('TripCard error:', err);
+      showError('生成失敗：' + (err.message || '請再試一次') );
+    } finally {
+      generateBtn.disabled = false;
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function renderOutput(parsed){
+    outputEl.innerHTML = '';
+    parsed.days.forEach(day => {
+      const card = document.createElement('div');
+      card.className = 'day-card';
+
+      const head = document.createElement('div');
+      head.className = 'day-head';
+      head.innerHTML =
+        '<span class="num">DAY ' + String(day.day).padStart(2,'0') + '</span>' +
+        '<span class="theme">' + escapeHtml(day.theme || '') + '</span>';
+      card.appendChild(head);
+
+      const stopsWrap = document.createElement('div');
+      stopsWrap.className = 'stops';
+      (day.stops || []).forEach(stop => {
+        const s = document.createElement('div');
+        s.className = 'stop';
+        s.innerHTML =
+          '<div class="time">' + escapeHtml(stop.time || '') + '</div>' +
+          '<div class="title">' + escapeHtml(stop.title || '') + '</div>' +
+          '<div class="note">' + escapeHtml(stop.note || '') + '</div>';
+        stopsWrap.appendChild(s);
+      });
+      card.appendChild(stopsWrap);
+      outputEl.appendChild(card);
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'output-actions';
+    actions.innerHTML =
+      '<button type="button" class="btn-ghost" id="edit-btn">調整條件</button>' +
+      '<button type="button" class="btn-ghost" id="regen-btn">重新生成</button>';
+    outputEl.appendChild(actions);
+
+    document.getElementById('edit-btn').addEventListener('click', () => {
+      outputEl.classList.remove('active');
+      formSection.style.display = 'block';
+      formSection.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+    document.getElementById('regen-btn').addEventListener('click', generateItinerary);
+
+    outputEl.classList.add('active');
+    outputEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  generateBtn.addEventListener('click', generateItinerary);
+  document.getElementById('retry-btn').addEventListener('click', () => {
+    errorSection.classList.remove('active');
+    generateItinerary();
+  });
+</script>
+</body>
+</html>
