@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Start/Sit 顧問 — 本週先發建議產生器</title>
+<title>今日打者 VS 先發投手 — MLB 對戰數據</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -37,9 +37,9 @@
     min-height:100vh;
   }
 
-  .wrap{max-width:640px;margin:0 auto;}
+  .wrap{max-width:720px;margin:0 auto;}
 
-  header{text-align:center;margin-bottom:26px;}
+  header{text-align:center;margin-bottom:22px;}
   .eyebrow{
     font-family:var(--font-mono);
     font-size:11px;
@@ -51,7 +51,7 @@
   h1{
     font-family:var(--font-display);
     font-weight:600;
-    font-size:clamp(34px,7vw,50px);
+    font-size:clamp(32px,7vw,48px);
     letter-spacing:.01em;
     line-height:1;
     margin:0 0 10px;
@@ -61,259 +61,115 @@
   .sub{
     font-size:14px;
     color:#5b5648;
-    max-width:420px;
+    max-width:460px;
     margin:0 auto;
     line-height:1.6;
   }
 
-  /* ---------- Clipboard card ---------- */
-  .board{position:relative;margin-top:34px;}
-  .clip{
-    position:absolute;
-    top:-16px;left:50%;
-    transform:translateX(-50%);
-    width:90px;height:26px;
-    background:linear-gradient(180deg,#c7c2b6,#a29c8c);
-    border-radius:6px;
-    box-shadow:0 3px 4px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.4);
-    z-index:2;
+  /* ---------- Date bar ---------- */
+  .datebar{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin:22px 0 20px;
   }
-  .clip::after{
-    content:"";
-    position:absolute;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    width:34px;height:8px;
-    border-radius:4px;
-    background:#7d7768;
-  }
-
-  .card{
-    background:var(--card);
-    border:1.5px solid var(--ink);
-    border-radius:6px;
-    box-shadow:0 4px 0 rgba(0,0,0,.12);
-    position:relative;
-    padding-top:26px;
-  }
-
-  .card-title{
-    text-align:center;
-    font-family:var(--font-mono);
-    font-size:12px;
-    letter-spacing:.1em;
-    color:var(--grey);
-    border-bottom:2px solid var(--ink);
-    padding-bottom:14px;
-    margin:0 20px 20px;
-  }
-
-  .form{padding:0 22px 24px;}
-  .field{margin-bottom:22px;}
-  label{
-    display:block;
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--blue);
-    margin-bottom:9px;
-  }
-
-  .pillrow{display:flex;gap:8px;flex-wrap:wrap;}
-  .pill{
-    border:1.5px solid var(--ink);
-    background:var(--paper);
-    border-radius:4px;
-    padding:7px 14px;
-    font-family:var(--font-body);
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    color:var(--ink);
-  }
-  .pill:hover{background:#fff;}
-  .pill:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-  .pill[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff;}
-  .pill.cat[aria-pressed="true"]{background:var(--red);border-color:var(--red);}
-  .hint{font-size:11px;color:var(--grey);margin-top:7px;}
-
-  /* ---------- Roster rows ---------- */
-  .roster-head{
-    display:grid;
-    grid-template-columns: 1fr 74px 1fr 30px;
-    gap:8px;
-    font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:.06em;
-    color:var(--grey);
-    text-transform:uppercase;
-    padding:0 2px 6px;
-  }
-  .roster-row{
-    display:grid;
-    grid-template-columns: 1fr 74px 1fr 30px;
-    gap:8px;
-    align-items:center;
-    margin-bottom:8px;
-  }
-  .roster-row input[type="text"], .roster-row select{
-    width:100%;
-    border:1.5px solid var(--ink);
-    border-radius:4px;
-    background:#fff;
-    font-family:var(--font-body);
-    font-size:13px;
-    padding:8px 8px;
-    color:var(--ink);
-  }
-  .roster-row select{font-family:var(--font-mono);font-size:12px;padding:8px 4px;}
-  .roster-row input:focus, .roster-row select:focus{outline:2px solid var(--blue);outline-offset:1px;}
-  .row-remove{
-    width:28px;height:28px;
-    border-radius:50%;
-    border:1.5px solid var(--red);
-    background:none;
-    color:var(--red);
-    font-size:15px;
-    line-height:1;
-    cursor:pointer;
-  }
-  .row-remove:hover{background:var(--red);color:#fff;}
-
-  .add-row{
-    margin-top:6px;
-    background:none;
-    border:1.5px dashed var(--ink);
-    border-radius:4px;
-    padding:9px 14px;
-    font-family:var(--font-mono);
-    font-size:12px;
-    color:var(--ink);
-    cursor:pointer;
-    width:100%;
-  }
-  .add-row:hover{background:#fff;}
-  .add-row:disabled{opacity:.4;cursor:default;}
-
-  .submit-row{margin-top:26px;}
-  .btn-main{
-    width:100%;
-    background:var(--gold);
-    border:1.5px solid var(--ink);
-    color:var(--ink);
+  .datebar button{
+    border:1.5px solid var(--ink);background:var(--card);color:var(--ink);
+    width:36px;height:36px;border-radius:6px;font-size:18px;cursor:pointer;
     font-family:var(--font-display);
-    font-weight:600;
-    font-size:19px;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    padding:13px 20px;
-    border-radius:6px;
-    cursor:pointer;
-    box-shadow:0 3px 0 var(--ink);
   }
-  .btn-main:hover{filter:brightness(1.04);}
-  .btn-main:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
-  .btn-main:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}
-  .btn-main:disabled{opacity:.5;cursor:default;}
-
-  /* ---------- Loading ---------- */
-  .loading{display:none;padding:36px 22px;text-align:center;}
-  .loading.active{display:block;}
-  .pitch-track{
-    position:relative;height:2px;background:var(--line);
-    margin:20px auto 12px;max-width:240px;
+  .datebar button:hover{background:#fff;}
+  .datebar button:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  #date-input{
+    border:1.5px solid var(--ink);background:#fff;color:var(--ink);
+    border-radius:6px;padding:8px 10px;font-family:var(--font-mono);font-size:13px;
   }
-  .ball{
-    position:absolute;top:-9px;left:0;font-size:18px;
-    animation:pitch 1.2s ease-in-out infinite;
-  }
-  @keyframes pitch{
-    0%{left:0;transform:rotate(0deg);opacity:0;}
-    12%{opacity:1;}
-    88%{opacity:1;}
-    100%{left:calc(100% - 18px);transform:rotate(360deg);opacity:0;}
-  }
-  .loading-text{font-family:var(--font-mono);font-size:12px;color:var(--blue);letter-spacing:.06em;}
-  @media (prefers-reduced-motion: reduce){
-    .ball{animation:none;left:calc(50% - 9px);opacity:1;}
+  #today-btn{
+    width:auto;padding:0 14px;font-family:var(--font-body);font-weight:600;font-size:13px;
   }
 
-  /* ---------- Error ---------- */
-  .error-box{display:none;padding:22px;text-align:center;color:var(--red);font-size:14px;}
-  .error-box.active{display:block;}
-  .error-box button{
-    margin-top:12px;background:none;border:1.5px solid var(--red);color:var(--red);
+  /* ---------- States ---------- */
+  .state-box{text-align:center;padding:40px 20px;color:var(--grey);font-size:13px;font-family:var(--font-mono);}
+  .state-box.error{color:var(--red);}
+  .state-box button{
+    margin-top:12px;background:none;border:1.5px solid var(--ink);color:var(--ink);
     font-family:var(--font-body);font-weight:600;font-size:13px;
     padding:8px 16px;border-radius:999px;cursor:pointer;
   }
+  .runway{position:relative;height:2px;background:var(--line);margin:0 auto 16px;max-width:220px;}
+  .ball{position:absolute;top:-9px;left:0;font-size:18px;animation:pitch 1.2s ease-in-out infinite;}
+  @keyframes pitch{
+    0%{left:0;transform:rotate(0deg);opacity:0;}
+    12%{opacity:1;} 88%{opacity:1;}
+    100%{left:calc(100% - 18px);transform:rotate(360deg);opacity:0;}
+  }
+  @media (prefers-reduced-motion: reduce){ .ball{animation:none;left:calc(50% - 9px);opacity:1;} }
 
-  /* ---------- Output ---------- */
-  #output{margin-top:22px;display:none;}
-  #output.active{display:block;}
-
-  .out-line{
-    display:flex;
-    gap:14px;
-    align-items:flex-start;
+  /* ---------- Game card ---------- */
+  .game-card{
     background:var(--card);
     border:1.5px solid var(--ink);
-    border-radius:6px;
-    padding:14px 16px;
-    margin-bottom:10px;
+    border-radius:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,.1);
+    margin-bottom:16px;
+    overflow:hidden;
   }
-  .diamond{
-    width:20px;height:20px;
-    flex:0 0 auto;
-    margin-top:3px;
-    background:#fff;
-    border:2px solid var(--ink);
-    transform:rotate(45deg);
-    position:relative;
+  .game-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 16px;border-bottom:1.5px solid var(--ink);
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;color:var(--grey);
   }
-  .diamond.start{background:var(--green);}
-  .diamond.bench{background:var(--grey);}
+  .g-status{
+    padding:2px 8px;border-radius:3px;background:var(--paper);color:var(--ink);font-weight:600;
+  }
+  .g-status.live{background:var(--green);color:#fff;}
+  .g-status.final{background:var(--ink);color:#fff;}
 
-  .out-body{flex:1;}
-  .out-name-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
-  .out-name{font-family:var(--font-display);font-size:20px;font-weight:600;}
-  .out-pos{
-    font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:.06em;
-    color:#fff;
-    background:var(--blue);
-    padding:2px 7px;
-    border-radius:3px;
+  .matchup-row{display:flex;align-items:stretch;gap:0;}
+  .pitcher-btn{
+    flex:1;min-width:0;
+    background:none;border:none;cursor:pointer;
+    padding:14px 12px;text-align:center;
+    display:flex;flex-direction:column;gap:3px;
+    font-family:var(--font-body);color:var(--ink);
+    border-bottom:3px solid transparent;
   }
-  .out-decision{
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    font-weight:700;
+  .pitcher-btn:hover{background:rgba(255,255,255,.5);}
+  .pitcher-btn:focus-visible{outline:2px solid var(--blue);outline-offset:-2px;}
+  .pitcher-btn.active{background:#fff;border-bottom-color:var(--gold);}
+  .pitcher-btn:disabled{cursor:default;opacity:.5;}
+  .pitcher-btn .team-name{font-size:11px;font-family:var(--font-mono);letter-spacing:.05em;color:var(--blue);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pitcher-btn .p-label{font-size:10px;color:var(--grey);}
+  .pitcher-btn .pitcher-name{font-family:var(--font-display);font-size:20px;font-weight:600;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .matchup-row .at{
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);font-size:11px;color:var(--grey);padding:0 4px;
   }
-  .out-decision.start{color:var(--green);}
-  .out-decision.bench{color:var(--grey);}
-  .out-reason{font-size:13px;color:#4a4536;line-height:1.5;margin-top:4px;}
 
-  .output-actions{display:flex;gap:10px;justify-content:center;margin-top:14px;}
-  .btn-ghost{
-    background:none;border:1.5px solid var(--ink);color:var(--ink);
-    font-family:var(--font-body);font-weight:600;font-size:13px;
-    padding:9px 18px;border-radius:999px;cursor:pointer;
-  }
-  .btn-ghost:hover{background:#fff;}
+  /* ---------- Matchup panel ---------- */
+  .matchup-panel{border-top:1.5px dashed var(--line);padding:14px 16px 16px;}
+  .panel-title{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--grey);text-transform:uppercase;margin-bottom:10px;}
+  .panel-hint{font-size:11px;color:var(--grey);margin-bottom:10px;font-family:var(--font-mono);}
+  .panel-loading{font-family:var(--font-mono);font-size:12px;color:var(--blue);padding:14px 0;text-align:center;}
+
+  .matchup-table-wrap{overflow-x:auto;border:1.5px solid var(--ink);border-radius:4px;background:#fff;}
+  table.matchup{border-collapse:collapse;width:100%;min-width:520px;font-size:12px;}
+  table.matchup th, table.matchup td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;}
+  table.matchup th{font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--grey);background:var(--card);}
+  table.matchup td:first-child, table.matchup th:first-child{text-align:left;font-weight:600;}
+  table.matchup td.hot{color:var(--green);font-weight:700;}
+  table.matchup td.cold{color:var(--red);}
+  table.matchup tr:last-child td{border-bottom:none;}
+  table.matchup tr.no-history{color:var(--grey);}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--grey);font-family:var(--font-mono);}
+  .legend span{display:inline-flex;align-items:center;gap:4px;}
+  .legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .legend .dot.hot{background:var(--green);}
+  .legend .dot.cold{background:var(--red);}
 
   footer{text-align:center;margin-top:32px;font-size:11px;color:var(--grey);font-family:var(--font-mono);letter-spacing:.04em;}
 
-  @media (max-width:420px){
-    .roster-head{display:none;}
-    .roster-row{grid-template-columns: 1fr 30px;grid-template-areas:"name remove" "pos pos" "note note";}
-    .roster-row input[name="name"]{grid-area:name;}
-    .roster-row .row-remove{grid-area:remove;}
-    .roster-row select{grid-area:pos;}
-    .roster-row input[name="note"]{grid-area:note;}
+  @media (max-width:460px){
+    .pitcher-btn .pitcher-name{font-size:17px;}
+    table.matchup{font-size:11px;}
   }
 </style>
 </head>
@@ -321,268 +177,46 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">Fantasy Baseball · AI Demo</div>
-    <h1>Start<em>/</em>Sit<br>顧問</h1>
-    <p class="sub">把這週卡在先發邊緣的球員列出來，AI 幫你依賽制與你在意的數據，給出先發或坐板凳的建議。</p>
+    <div class="eyebrow">MLB · AI Demo</div>
+    <h1>今日<em>打者</em>VS<br>先發投手</h1>
+    <p class="sub">列出今天所有 MLB 賽事的先發投手，點選任一位投手，查看對方打者過去對戰他的生涯數據。</p>
   </header>
 
-  <div class="board">
-    <div class="clip"></div>
-    <div class="card">
-      <div class="card-title">WEEKLY LINEUP CARD</div>
-
-      <div class="form" id="form-section">
-        <div class="field">
-          <label>賽制</label>
-          <div class="pillrow" id="format-row">
-            <button type="button" class="pill" data-value="roto" aria-pressed="true">Rotisserie</button>
-            <button type="button" class="pill" data-value="points" aria-pressed="false">Points League</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>這週最在意的數據（可複選，最多3項）</label>
-          <div class="pillrow" id="cat-row">
-            <button type="button" class="pill cat" data-value="AVG">AVG</button>
-            <button type="button" class="pill cat" data-value="HR">HR</button>
-            <button type="button" class="pill cat" data-value="RBI">RBI</button>
-            <button type="button" class="pill cat" data-value="R">R</button>
-            <button type="button" class="pill cat" data-value="SB">SB</button>
-            <button type="button" class="pill cat" data-value="ERA">ERA</button>
-            <button type="button" class="pill cat" data-value="WHIP">WHIP</button>
-            <button type="button" class="pill cat" data-value="K">K</button>
-            <button type="button" class="pill cat" data-value="W">W</button>
-            <button type="button" class="pill cat" data-value="SV">SV</button>
-          </div>
-          <div class="hint" id="cat-hint"></div>
-        </div>
-
-        <div class="field">
-          <label>球員名單</label>
-          <div class="roster-head">
-            <span>姓名</span><span>位置</span><span>備註（傷況／對戰／手感）</span><span></span>
-          </div>
-          <div id="roster-body"></div>
-          <button type="button" class="add-row" id="add-row-btn">＋ 新增球員</button>
-        </div>
-
-        <div class="submit-row">
-          <button type="button" class="btn-main" id="generate-btn">產生先發建議</button>
-        </div>
-      </div>
-
-      <div class="loading" id="loading-section">
-        <div class="pitch-track"><div class="ball">⚾</div></div>
-        <div class="loading-text" id="loading-text">分析對戰組合中…</div>
-      </div>
-
-      <div class="error-box" id="error-section">
-        <div id="error-text">教練暫時看不清楚戰況，再試一次看看。</div>
-        <button type="button" id="retry-btn">重新產生</button>
-      </div>
-
-      <div id="output"></div>
-    </div>
+  <div class="datebar">
+    <button type="button" id="prev-day" aria-label="前一天">‹</button>
+    <input type="date" id="date-input">
+    <button type="button" id="today-btn">今天</button>
+    <button type="button" id="next-day" aria-label="後一天">›</button>
   </div>
 
-  <footer>手動輸入球員狀況 → AI 給出先發／替補建議 · 純前端 Demo</footer>
+  <div id="games-section"></div>
+
+  <footer>先發投手與打線來自 MLB Stats API · 對戰數據為生涯累積 · 打線於賽前約 2–3 小時公布</footer>
 </div>
 
 <script>
-  const POSITIONS = ['P','C','1B','2B','3B','SS','OF','UTIL'];
-  const state = { format: 'roto', cats: new Set(), rowCount: 0 };
-  const MAX_ROWS = 8;
+  const gamesSection = document.getElementById('games-section');
+  const dateInput = document.getElementById('date-input');
 
-  const rosterBody = document.getElementById('roster-body');
-  const addRowBtn = document.getElementById('add-row-btn');
-
-  function addRosterRow(prefill){
-    if(state.rowCount >= MAX_ROWS){ addRowBtn.disabled = true; return; }
-    state.rowCount++;
-    const row = document.createElement('div');
-    row.className = 'roster-row';
-
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text'; nameInput.name = 'name';
-    nameInput.placeholder = '球員姓名';
-    nameInput.maxLength = 24;
-
-    const posSelect = document.createElement('select');
-    posSelect.name = 'pos';
-    POSITIONS.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      posSelect.appendChild(opt);
-    });
-
-    const noteInput = document.createElement('input');
-    noteInput.type = 'text'; noteInput.name = 'note';
-    noteInput.placeholder = '例如：對左投手感好、剛從輕傷回歸';
-    noteInput.maxLength = 40;
-
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'row-remove';
-    removeBtn.textContent = '×';
-    removeBtn.setAttribute('aria-label','移除這位球員');
-    removeBtn.addEventListener('click', () => {
-      row.remove();
-      state.rowCount--;
-      addRowBtn.disabled = false;
-    });
-
-    row.appendChild(nameInput);
-    row.appendChild(posSelect);
-    row.appendChild(noteInput);
-    row.appendChild(removeBtn);
-    rosterBody.appendChild(row);
-
-    if(state.rowCount >= MAX_ROWS) addRowBtn.disabled = true;
+  function toDateStr(d){
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + day;
+  }
+  // MLB 的比賽日以美國東岸時間為準
+  function todayET(){
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+    const o = {}; parts.forEach(p => o[p.type] = p.value);
+    return o.year + '-' + o.month + '-' + o.day;
+  }
+  function shiftDate(str, delta){
+    const [y,m,d] = str.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m-1, d));
+    dt.setUTCDate(dt.getUTCDate() + delta);
+    return toDateStr(new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
   }
 
-  addRowBtn.addEventListener('click', () => addRosterRow());
-  for(let i=0;i<3;i++) addRosterRow();
-
-  function setupSingleSelect(rowId, onChange){
-    const row = document.getElementById(rowId);
-    row.querySelectorAll('.pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        row.querySelectorAll('.pill').forEach(b => b.setAttribute('aria-pressed','false'));
-        btn.setAttribute('aria-pressed','true');
-        onChange(btn.dataset.value);
-      });
-    });
-  }
-  setupSingleSelect('format-row', v => state.format = v);
-
-  const catHint = document.getElementById('cat-hint');
-  document.querySelectorAll('#cat-row .pill').forEach(btn => {
-    btn.setAttribute('aria-pressed','false');
-    btn.addEventListener('click', () => {
-      const v = btn.dataset.value;
-      if(state.cats.has(v)){
-        state.cats.delete(v);
-        btn.setAttribute('aria-pressed','false');
-      } else {
-        if(state.cats.size >= 3){
-          catHint.textContent = '最多選 3 項數據喔';
-          return;
-        }
-        state.cats.add(v);
-        btn.setAttribute('aria-pressed','true');
-      }
-      catHint.textContent = '';
-    });
-  });
-
-  const formSection = document.getElementById('form-section');
-  const loadingSection = document.getElementById('loading-section');
-  const errorSection = document.getElementById('error-section');
-  const outputEl = document.getElementById('output');
-  const loadingText = document.getElementById('loading-text');
-  const generateBtn = document.getElementById('generate-btn');
-
-  const loadingMessages = ['分析對戰組合中…','比對這週的先發輪值…','衡量傷況與手感…','排出建議名單…'];
-  let loadingInterval;
-
-  function showLoading(){
-    formSection.style.display = 'none';
-    errorSection.classList.remove('active');
-    outputEl.classList.remove('active');
-    outputEl.innerHTML = '';
-    loadingSection.classList.add('active');
-    let i = 0;
-    loadingText.textContent = loadingMessages[0];
-    loadingInterval = setInterval(() => {
-      i = (i + 1) % loadingMessages.length;
-      loadingText.textContent = loadingMessages[i];
-    }, 1300);
-  }
-  function hideLoading(){
-    clearInterval(loadingInterval);
-    loadingSection.classList.remove('active');
-  }
-  function showError(msg){
-    hideLoading();
-    document.getElementById('error-text').textContent = msg || '教練暫時看不清楚戰況，再試一次看看。';
-    errorSection.classList.add('active');
-  }
-
-  function collectRoster(){
-    return Array.from(rosterBody.querySelectorAll('.roster-row')).map(row => ({
-      name: row.querySelector('input[name="name"]').value.trim(),
-      pos: row.querySelector('select[name="pos"]').value,
-      note: row.querySelector('input[name="note"]').value.trim()
-    })).filter(p => p.name);
-  }
-
-  function buildPrompt(roster){
-    const formatLabel = state.format === 'roto' ? 'Rotisserie 5x5 計分制' : 'Points League 積分制';
-    const catList = state.cats.size ? Array.from(state.cats).join('、') : '沒有特別指定，一般判斷即可';
-    const rosterText = roster.map((p,i) =>
-      (i+1) + '. ' + p.name + '（位置：' + p.pos + '，備註：' + (p.note || '無') + '）'
-    ).join('\n');
-
-    return [
-      '你是一個 fantasy baseball 顧問。聯盟賽制是：' + formatLabel + '。',
-      '本週我最在意的數據項目：' + catList + '。',
-      '',
-      '以下是這週卡在先發邊緣、需要決定先發或坐板凳的球員：',
-      rosterText,
-      '',
-      '請針對每一位球員給出「start」或「bench」的建議，並用一句話（20字以內）說明理由，',
-      '理由要具體參考備註內容與所選數據項目，不要空泛。',
-      '請只回傳 JSON，不要任何說明文字、不要 markdown code fence，格式如下：',
-      '{"recommendations":[{"name":"球員姓名","decision":"start","reason":"一句話理由"}]}'
-    ].join('\n');
-  }
-
-  async function generateAdvice(){
-    const roster = collectRoster();
-    if(roster.length === 0){
-      rosterBody.querySelector('input[name="name"]').focus();
-      return;
-    }
-    generateBtn.disabled = true;
-    showLoading();
-
-    try{
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: buildPrompt(roster) })
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if(!response.ok){
-        throw new Error((data && data.error) || ('API 回應異常 (' + response.status + ')'));
-      }
-      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
-      const raw = textBlocks.join('\n').trim();
-      const cleaned = raw.replace(/```json|```/g, '').trim();
-
-      let parsed;
-      try{
-        parsed = JSON.parse(cleaned);
-      } catch(e){
-        throw new Error('建議格式解析失敗');
-      }
-
-      if(!parsed.recommendations || !Array.isArray(parsed.recommendations) || parsed.recommendations.length === 0){
-        throw new Error('沒有收到有效的建議內容');
-      }
-
-      renderOutput(parsed, roster);
-      hideLoading();
-
-    } catch(err){
-      console.error('StartSit error:', err);
-      showError('生成失敗：' + (err.message || '請再試一次'));
-    } finally {
-      generateBtn.disabled = false;
-    }
-  }
+  let currentDate = todayET();
+  dateInput.value = currentDate;
 
   function escapeHtml(str){
     const div = document.createElement('div');
@@ -590,51 +224,234 @@
     return div.innerHTML;
   }
 
-  function renderOutput(parsed, roster){
-    outputEl.innerHTML = '';
-    const posMap = {};
-    roster.forEach(p => posMap[p.name] = p.pos);
-
-    parsed.recommendations.forEach(rec => {
-      const decision = (rec.decision || '').toLowerCase() === 'start' ? 'start' : 'bench';
-      const line = document.createElement('div');
-      line.className = 'out-line';
-      line.innerHTML =
-        '<div class="diamond ' + decision + '"></div>' +
-        '<div class="out-body">' +
-          '<div class="out-name-row">' +
-            '<span class="out-name">' + escapeHtml(rec.name || '') + '</span>' +
-            '<span class="out-pos">' + escapeHtml(posMap[rec.name] || '') + '</span>' +
-            '<span class="out-decision ' + decision + '">' + (decision === 'start' ? 'START' : 'BENCH') + '</span>' +
-          '</div>' +
-          '<div class="out-reason">' + escapeHtml(rec.reason || '') + '</div>' +
-        '</div>';
-      outputEl.appendChild(line);
-    });
-
-    const actions = document.createElement('div');
-    actions.className = 'output-actions';
-    actions.innerHTML =
-      '<button type="button" class="btn-ghost" id="edit-btn">調整名單</button>' +
-      '<button type="button" class="btn-ghost" id="regen-btn">重新生成</button>';
-    outputEl.appendChild(actions);
-
-    document.getElementById('edit-btn').addEventListener('click', () => {
-      outputEl.classList.remove('active');
-      formSection.style.display = 'block';
-      formSection.scrollIntoView({behavior:'smooth', block:'start'});
-    });
-    document.getElementById('regen-btn').addEventListener('click', generateAdvice);
-
-    outputEl.classList.add('active');
-    outputEl.scrollIntoView({behavior:'smooth', block:'start'});
+  function statusClass(state){
+    const s = (state || '').toLowerCase();
+    if(s.includes('final')) return 'final';
+    if(s.includes('progress') || s.includes('live')) return 'live';
+    return '';
   }
 
-  generateBtn.addEventListener('click', generateAdvice);
-  document.getElementById('retry-btn').addEventListener('click', () => {
-    errorSection.classList.remove('active');
-    generateAdvice();
+  function fmtTime(iso){
+    try{
+      return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    } catch(e){ return ''; }
+  }
+
+  async function loadGames(dateStr){
+    gamesSection.innerHTML = '<div class="state-box"><div class="runway"><div class="ball">⚾</div></div>讀取今日賽程中…</div>';
+    try{
+      const res = await fetch('/api/mlb?path=schedule&sportId=1&date=' + encodeURIComponent(dateStr) + '&hydrate=probablePitcher,team,linescore,lineups');
+      const data = await res.json();
+      if(!res.ok) throw new Error((data && data.error) || ('讀取失敗 (' + res.status + ')'));
+
+      const day = (data.dates && data.dates[0]) || null;
+      const games = (day && day.games) || [];
+      if(games.length === 0){
+        gamesSection.innerHTML = '<div class="state-box">這一天沒有 MLB 賽事，換個日期看看吧。</div>';
+        return;
+      }
+      renderGames(games);
+    } catch(err){
+      console.error('schedule error:', err);
+      gamesSection.innerHTML = '<div class="state-box error">讀取賽程失敗：' + escapeHtml(err.message || '請稍後再試') +
+        '<br><button type="button" id="retry-schedule">重新讀取</button></div>';
+      document.getElementById('retry-schedule').addEventListener('click', () => loadGames(currentDate));
+    }
+  }
+
+  function renderGames(games){
+    gamesSection.innerHTML = '';
+    games.forEach((game, idx) => {
+      const away = game.teams && game.teams.away;
+      const home = game.teams && game.teams.home;
+      if(!away || !home) return;
+
+      const card = document.createElement('div');
+      card.className = 'game-card';
+
+      const head = document.createElement('div');
+      head.className = 'game-head';
+      const statusText = (game.status && game.status.detailedState) || '';
+      head.innerHTML =
+        '<span>' + escapeHtml(fmtTime(game.gameDate)) + '</span>' +
+        '<span class="g-status ' + statusClass(statusText) + '">' + escapeHtml(statusText) + '</span>';
+      card.appendChild(head);
+
+      const row = document.createElement('div');
+      row.className = 'matchup-row';
+      row.appendChild(makePitcherBtn(away, home, game, idx, 'away'));
+      const at = document.createElement('div'); at.className = 'at'; at.textContent = '@';
+      row.appendChild(at);
+      row.appendChild(makePitcherBtn(home, away, game, idx, 'home'));
+      card.appendChild(row);
+
+      const panelAway = document.createElement('div');
+      panelAway.className = 'matchup-panel'; panelAway.style.display = 'none';
+      panelAway.dataset.panel = 'away-' + idx;
+      const panelHome = document.createElement('div');
+      panelHome.className = 'matchup-panel'; panelHome.style.display = 'none';
+      panelHome.dataset.panel = 'home-' + idx;
+      card.appendChild(panelAway);
+      card.appendChild(panelHome);
+
+      gamesSection.appendChild(card);
+    });
+  }
+
+  // side: 'away' 表示這位是「客隊」的先發投手，他面對的是主隊打線；反之亦然
+  function makePitcherBtn(pitchingSide, battingSide, game, idx, side){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pitcher-btn';
+    const pitcher = pitchingSide.probablePitcher;
+
+    btn.innerHTML =
+      '<span class="team-name">' + escapeHtml(pitchingSide.team.name) + ' 先發</span>' +
+      '<span class="pitcher-name">' + (pitcher ? escapeHtml(pitcher.fullName) : '投手未公布') + '</span>' +
+      '<span class="p-label">點選查看 ' + escapeHtml(battingSide.team.name) + ' 打者對戰數據</span>';
+
+    if(!pitcher){
+      btn.disabled = true;
+      return btn;
+    }
+
+    btn.addEventListener('click', () => togglePanel(btn, game, idx, side, pitcher, battingSide));
+    return btn;
+  }
+
+  async function togglePanel(btn, game, idx, side, pitcher, battingSide){
+    const card = btn.closest('.game-card');
+    const panel = card.querySelector('[data-panel="' + side + '-' + idx + '"]');
+    const otherSide = side === 'away' ? 'home' : 'away';
+    const otherPanel = card.querySelector('[data-panel="' + otherSide + '-' + idx + '"]');
+    const otherBtn = card.querySelectorAll('.pitcher-btn')[side === 'away' ? 1 : 0];
+
+    const isOpen = panel.style.display !== 'none';
+    otherPanel.style.display = 'none';
+    if(otherBtn) otherBtn.classList.remove('active');
+
+    if(isOpen){
+      panel.style.display = 'none';
+      btn.classList.remove('active');
+      return;
+    }
+    btn.classList.add('active');
+    panel.style.display = 'block';
+
+    if(panel.dataset.loaded === '1') return;
+    panel.dataset.loaded = '1';
+    panel.innerHTML = '<div class="panel-loading">讀取打線與對戰數據中…</div>';
+
+    try{
+      const batters = await getBatters(game, side, battingSide);
+      if(batters.length === 0){
+        panel.innerHTML = '<div class="panel-hint">目前查無 ' + escapeHtml(battingSide.team.name) + ' 的打者名單，請稍後再試。</div>';
+        return;
+      }
+      const rows = await Promise.all(batters.map(b => fetchVsPlayer(b, pitcher.id)));
+      renderMatchupTable(panel, pitcher, battingSide, rows, batters.some(b => b.fromRoster));
+    } catch(err){
+      console.error('matchup error:', err);
+      panel.innerHTML = '<div class="panel-hint" style="color:var(--red)">讀取失敗：' + escapeHtml(err.message || '請再試一次') + '</div>';
+    }
+  }
+
+  async function getBatters(game, side, battingSide){
+    const lineups = game.lineups || {};
+    const list = side === 'away' ? lineups.homePlayers : lineups.awayPlayers;
+    if(list && list.length > 0){
+      return list.map(p => ({ id: p.id, name: p.fullName, pos: (p.primaryPosition && p.primaryPosition.abbreviation) || '', fromRoster:false }));
+    }
+    // 打線尚未公布，退而求其次用該隊現役野手名單
+    const teamId = battingSide.team.id;
+    const res = await fetch('/api/mlb?path=teams/' + teamId + '/roster&rosterType=active');
+    const data = await res.json();
+    const roster = (data && data.roster) || [];
+    return roster
+      .filter(r => r.position && r.position.abbreviation !== 'P')
+      .slice(0, 15)
+      .map(r => ({ id: r.person.id, name: r.person.fullName, pos: r.position.abbreviation, fromRoster:true }));
+  }
+
+  async function fetchVsPlayer(batter, pitcherId){
+    try{
+      const res = await fetch('/api/mlb?path=people/' + batter.id + '/stats&stats=vsPlayerTotal&opposingPlayerId=' + pitcherId + '&group=hitting');
+      const data = await res.json();
+      const split = data && data.stats && data.stats[0] && data.stats[0].splits && data.stats[0].splits[0];
+      return { batter, stat: split ? split.stat : null };
+    } catch(e){
+      return { batter, stat: null };
+    }
+  }
+
+  function renderMatchupTable(panel, pitcher, battingSide, rows, isRosterFallback){
+    rows.sort((a,b) => {
+      const abA = a.stat ? Number(a.stat.atBats || 0) : -1;
+      const abB = b.stat ? Number(b.stat.atBats || 0) : -1;
+      return abB - abA;
+    });
+
+    let html = '<div class="panel-title">' + escapeHtml(battingSide.team.name) + ' 打者　VS　' + escapeHtml(pitcher.fullName) + '（生涯對戰）</div>';
+    if(isRosterFallback){
+      html += '<div class="panel-hint">打線尚未公布，以下先列出該隊現役野手；正式打線公布後請重新整理頁面。</div>';
+    }
+    html += '<div class="matchup-table-wrap"><table class="matchup"><thead><tr>' +
+      '<th>打者</th><th>位置</th><th>打數</th><th>安打</th><th>全壘打</th><th>打點</th><th>三振</th><th>AVG</th><th>OPS</th>' +
+      '</tr></thead><tbody>';
+
+    rows.forEach(r => {
+      const s = r.stat;
+      const ab = s ? Number(s.atBats || 0) : 0;
+      if(!s || ab === 0){
+        html += '<tr class="no-history"><td>' + escapeHtml(r.batter.name) + '</td><td>' + escapeHtml(r.batter.pos) + '</td>' +
+          '<td colspan="7">無生涯交手紀錄</td></tr>';
+        return;
+      }
+      const avg = parseFloat(s.avg || '0');
+      const ops = parseFloat(s.ops || '0');
+      const hot = ab >= 5 && ops >= 0.850;
+      const cold = ab >= 5 && ops <= 0.500;
+      const cls = hot ? 'hot' : (cold ? 'cold' : '');
+      html += '<tr>' +
+        '<td>' + escapeHtml(r.batter.name) + '</td>' +
+        '<td>' + escapeHtml(r.batter.pos) + '</td>' +
+        '<td>' + ab + '</td>' +
+        '<td>' + (s.hits || 0) + '</td>' +
+        '<td>' + (s.homeRuns || 0) + '</td>' +
+        '<td>' + (s.rbi || 0) + '</td>' +
+        '<td>' + (s.strikeOuts || 0) + '</td>' +
+        '<td class="' + cls + '">' + escapeHtml(s.avg || '—') + '</td>' +
+        '<td class="' + cls + '">' + escapeHtml(s.ops || '—') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>' +
+      '<div class="legend"><span><span class="dot hot"></span>對戰打數≥5 且 OPS≥.850（打者佔優）</span>' +
+      '<span><span class="dot cold"></span>對戰打數≥5 且 OPS≤.500（投手壓制）</span></div>';
+
+    panel.innerHTML = html;
+  }
+
+  document.getElementById('prev-day').addEventListener('click', () => {
+    currentDate = shiftDate(currentDate, -1);
+    dateInput.value = currentDate;
+    loadGames(currentDate);
   });
+  document.getElementById('next-day').addEventListener('click', () => {
+    currentDate = shiftDate(currentDate, 1);
+    dateInput.value = currentDate;
+    loadGames(currentDate);
+  });
+  document.getElementById('today-btn').addEventListener('click', () => {
+    currentDate = todayET();
+    dateInput.value = currentDate;
+    loadGames(currentDate);
+  });
+  dateInput.addEventListener('change', () => {
+    if(dateInput.value){ currentDate = dateInput.value; loadGames(currentDate); }
+  });
+
+  loadGames(currentDate);
 </script>
 </body>
 </html>

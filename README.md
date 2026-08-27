@@ -1,8 +1,15 @@
 # 部署說明
 
-這個資料夾裡有兩個 AI demo（`index.html` = Start/Sit 顧問、`tripcard.html` = 行程卡 TripCard），
-和一支後端 proxy（`api/generate.js`）。前端不會直接呼叫 Anthropic API，而是呼叫你自己的
-`/api/generate`，由這支 function 用你的金鑰去問 AI，金鑰不會出現在瀏覽器裡。
+這個資料夾裡有兩個 demo（`index.html` = 今日打者 VS 先發投手、`tripcard.html` = 行程卡 TripCard AI demo），
+和兩支後端 proxy：
+
+- `api/mlb.js`：轉發公開的 MLB Stats API（statsapi.mlb.com，免金鑰）。`index.html` 靠它抓
+  今天的賽程與先發投手、賽前公布的確認打線（若還沒公布則退而求其次列出該隊現役野手），
+  以及每位打者對這位投手的生涯對戰數據。這個頁面純粹讀真實數據，不會呼叫 Anthropic API。
+- `api/generate.js`：前端不會直接呼叫 Anthropic API，而是呼叫你自己的 `/api/generate`，
+  由這支 function 用你的金鑰去問 AI，金鑰不會出現在瀏覽器裡。目前只有 `tripcard.html`
+  在用這支（行程規劃）；如果之後想幫「今日打者 VS 先發投手」加上 AI 一句話重點分析，
+  也可以直接沿用這支 proxy。
 
 ## 你需要準備
 
@@ -47,8 +54,8 @@ gh repo create ai-demo-apps --public --source=. --push
 按下 Deploy，等大約 30 秒到 1 分鐘。完成後 Vercel 會給你一個網址，
 長得像 `https://ai-demo-apps-xxxx.vercel.app`。
 
-打開這個網址，測試一下「產生先發建議」按鈕，確認真的能收到 AI 回應。
-如果想看 TripCard，網址後面加 `/tripcard.html`。
+打開這個網址就會看到今天的 MLB 賽程與先發投手，點一位投手就能看到對方打者的對戰數據。
+如果想看 TripCard（AI 行程規劃），網址後面加 `/tripcard.html`，測試時記得確認能收到 AI 回應。
 
 ### 5.（可選）本機測試
 
