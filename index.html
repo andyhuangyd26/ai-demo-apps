@@ -13,10 +13,10 @@
     --line:#C9BFA8;
     --card:#F8F3E7;
     --ink:#211C18;
-    --red:#A32B2B;
+    --red:#DC2626;
     --blue:#24487A;
     --gold:#D9A62B;
-    --green:#3D7A46;
+    --green:#15803D;
     --grey:#8A8272;
     --font-display:'Teko', sans-serif;
     --font-body:'Inter', sans-serif;
@@ -51,11 +51,12 @@
   h1{
     font-family:var(--font-display);
     font-weight:600;
-    font-size:clamp(32px,7vw,48px);
+    font-size:clamp(24px,8vw,48px);
     letter-spacing:.01em;
     line-height:1;
     margin:0 0 10px;
     text-transform:uppercase;
+    white-space:nowrap;
   }
   h1 em{font-style:normal;color:var(--red);}
   .sub{
@@ -95,11 +96,20 @@
     font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
     color:var(--blue);margin-bottom:9px;display:block;
   }
-  .name-search{position:relative;}
+  .name-search-row{display:flex;gap:8px;align-items:stretch;}
+  .name-search{position:relative;flex:1;min-width:0;}
   #batter-search{
     width:100%;border:1.5px solid var(--ink);border-radius:4px;background:#fff;
     font-family:var(--font-body);font-size:14px;padding:10px 10px;color:var(--ink);
   }
+  #batter-reset{
+    flex:0 0 auto;
+    border:1.5px solid var(--ink);border-radius:4px;background:var(--paper);color:var(--ink);
+    font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.04em;
+    padding:0 16px;cursor:pointer;
+  }
+  #batter-reset:hover{background:#fff;}
+  #batter-reset:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
   #batter-search:focus{outline:2px solid var(--blue);outline-offset:1px;}
   .suggest{
     position:absolute;top:calc(100% + 4px);left:0;right:0;
@@ -205,16 +215,19 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">MLB · AI Demo</div>
-    <h1>今日<em>打者</em>VS<br>先發投手</h1>
+    <div class="eyebrow">MLB</div>
+    <h1>今日<em>打者</em>VS先發投手</h1>
     <p class="sub">列出今天所有 MLB 賽事的先發投手，點選任一位投手，查看對方打者過去對戰他的生涯數據。</p>
   </header>
 
   <div class="lookup-card">
     <label class="lookup-label" for="batter-search">打者今日對戰查詢</label>
-    <div class="name-search">
-      <input type="text" id="batter-search" placeholder="輸入球員姓名，例如 Aaron Judge" autocomplete="off">
-      <div class="suggest" id="batter-suggest"></div>
+    <div class="name-search-row">
+      <div class="name-search">
+        <input type="text" id="batter-search" placeholder="輸入球員姓名，例如 Aaron Judge" autocomplete="off">
+        <div class="suggest" id="batter-suggest"></div>
+      </div>
+      <button type="button" id="batter-reset" aria-label="清除查詢">Reset</button>
     </div>
     <div id="batter-result"></div>
   </div>
@@ -494,6 +507,15 @@
     batterSearchTimer = setTimeout(() => searchBatters(q), 350);
   });
   batterSearchInput.addEventListener('blur', () => setTimeout(() => batterSuggestBox.classList.remove('active'), 200));
+
+  document.getElementById('batter-reset').addEventListener('click', () => {
+    if(batterSearchTimer) clearTimeout(batterSearchTimer);
+    batterSearchInput.value = '';
+    batterSuggestBox.classList.remove('active');
+    batterSuggestBox.innerHTML = '';
+    batterResultEl.innerHTML = '';
+    batterSearchInput.focus();
+  });
 
   async function searchBatters(q){
     try{
